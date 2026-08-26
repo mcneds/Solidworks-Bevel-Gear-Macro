@@ -1044,7 +1044,7 @@ Private Function GetCleanBlankConeApexAxis( _
 
     ' Same SOLIDWORKS cone-parameter interpretation used by the official
     ' "Locate Apex of Conical Face" VBA example.
-    vConee = swBestSurf.ConeParams
+    vCone = swBestSurf.ConeParams
 
     axisX = CDbl(vCone(3))
     axisY = CDbl(vCone(4))
