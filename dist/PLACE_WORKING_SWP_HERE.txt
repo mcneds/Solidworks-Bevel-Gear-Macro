@@ -1,0 +1,7 @@
+Copy your tested working SOLIDWORKS macro here or into the repository root.
+
+Recommended filename:
+    BevelGearGenerator.swp
+
+This environment cannot generate a valid SOLIDWORKS .swp binary because that
+project must be saved by the SOLIDWORKS VBA host.
