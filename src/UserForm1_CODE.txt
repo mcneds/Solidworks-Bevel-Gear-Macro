@@ -1,0 +1,171 @@
+Option Explicit
+
+Private mEvents As cBevelFormEvents
+
+Private Sub UserForm_Initialize()
+    BuildUI
+
+    Set mEvents = New cBevelFormEvents
+    Set mEvents.Host = Me
+    Set mEvents.GenerateButton = Me.Controls("btnGenerate")
+    Set mEvents.CancelButton = Me.Controls("btnCancel")
+    Set mEvents.ModeCombo = Me.Controls("cmbMode")
+    Set mEvents.LockCombo = Me.Controls("cmbLock")
+
+    UpdateUI
+End Sub
+
+Private Sub BuildUI()
+    Dim c As Object
+
+    Me.Caption = "SW 2025 Straight Bevel Gear Generator"
+    Me.Width = 545
+    Me.Height = 500
+
+    ' Top selectors
+    AddLabel "lblMode", "Mode", 18, 18, 45, 18
+    Set c = AddCombo("cmbMode", 68, 15, 145, 20)
+    c.AddItem "Single gear"
+    c.AddItem "Mating pair"
+    c.ListIndex = 1
+
+    AddLabel "lblLock", "Lock", 235, 18, 35, 18
+    Set c = AddCombo("cmbLock", 272, 15, 240, 20)
+    c.AddItem "Module + Teeth -> Pitch diameter"
+    c.AddItem "Pitch diameter + Teeth -> Module"
+    c.AddItem "Module + Pitch diameter -> Teeth"
+    c.ListIndex = 0
+
+    AddSectionTitle "Gear 1", 18, 55, 230
+    AddSectionTitle "Gear 2", 282, 55, 230
+
+    AddField "Module (mm)", "txtModule", "1", 18, 84, 180
+    AddField "Teeth 1", "txtTeeth1", "12", 18, 116, 180
+    AddField "Pitch dia 1 (mm)", "txtPitchDia1", "12", 18, 148, 180
+    AddField "Pitch cone 1 (deg)", "txtPitchAngle1", "45", 18, 180, 180
+    AddField "Bore diameter (mm)", "txtBore1", "3", 18, 212, 180
+
+    AddField "Teeth 2", "txtTeeth2", "12", 282, 116, 180
+    AddField "Pitch dia 2 (mm)", "txtPitchDia2", "12", 282, 148, 180
+    AddField "Pitch cone 2 (deg)", "txtPitchAngle2", "45", 282, 180, 180
+
+    AddSectionTitle "Common / pair settings", 18, 266, 494
+    AddField "Face width (mm)", "txtFaceWidth", "4", 18, 296, 180
+    AddField "Pressure angle (deg)", "txtPressureAngle", "20", 282, 296, 180
+    AddField "Shaft angle (deg)", "txtShaftAngle", "90", 18, 328, 180
+
+    Set c = Me.Controls.Add("Forms.Label.1", "lblNote", True)
+    c.Caption = "Approximate printable straight-bevel geometry. Pair mode uses one common bore and measured cone-apex alignment."
+    c.Left = 18
+    c.Top = 370
+    c.Width = 494
+    c.Height = 34
+    c.WordWrap = True
+
+    Set c = Me.Controls.Add("Forms.CommandButton.1", "btnGenerate", True)
+    c.Caption = "Generate"
+    c.Left = 325
+    c.Top = 420
+    c.Width = 90
+    c.Height = 28
+    c.Default = True
+
+    Set c = Me.Controls.Add("Forms.CommandButton.1", "btnCancel", True)
+    c.Caption = "Cancel"
+    c.Left = 422
+    c.Top = 420
+    c.Width = 90
+    c.Height = 28
+    c.Cancel = True
+End Sub
+
+Private Sub AddSectionTitle(ByVal controlName As String, ByVal x As Single, ByVal y As Single, ByVal w As Single)
+    Dim c As Object
+    Set c = Me.Controls.Add("Forms.Label.1", "sec" & CStr(Me.Controls.Count + 1), True)
+    c.Caption = controlName
+    c.Left = x
+    c.Top = y
+    c.Width = w
+    c.Height = 18
+    c.Font.Bold = True
+End Sub
+
+Private Sub AddLabel(ByVal controlName As String, ByVal captionText As String, ByVal x As Single, ByVal y As Single, ByVal w As Single, ByVal h As Single)
+    Dim c As Object
+    Set c = Me.Controls.Add("Forms.Label.1", controlName, True)
+    c.Caption = captionText
+    c.Left = x
+    c.Top = y
+    c.Width = w
+    c.Height = h
+End Sub
+
+Private Function AddCombo(ByVal controlName As String, ByVal x As Single, ByVal y As Single, ByVal w As Single, ByVal h As Single) As Object
+    Dim c As Object
+    Set c = Me.Controls.Add("Forms.ComboBox.1", controlName, True)
+    c.Left = x
+    c.Top = y
+    c.Width = w
+    c.Height = h
+    c.Style = 2
+    Set AddCombo = c
+End Function
+
+Private Sub AddField(ByVal captionText As String, ByVal controlName As String, ByVal defaultValue As String, ByVal x As Single, ByVal y As Single, ByVal totalWidth As Single)
+    Dim lbl As Object
+    Dim txt As Object
+
+    Set lbl = Me.Controls.Add("Forms.Label.1", "lbl_" & controlName, True)
+    lbl.Caption = captionText
+    lbl.Left = x
+    lbl.Top = y + 3
+    lbl.Width = 105
+    lbl.Height = 18
+
+    Set txt = Me.Controls.Add("Forms.TextBox.1", controlName, True)
+    txt.Text = defaultValue
+    txt.Left = x + 110
+    txt.Top = y
+    txt.Width = totalWidth - 110
+    txt.Height = 20
+End Sub
+
+Public Sub GenerateClicked()
+    modBevelGear.GenerateFromForm Me
+End Sub
+
+Public Sub CancelClicked()
+    Unload Me
+End Sub
+
+Public Sub UpdateUI()
+    Dim pairMode As Boolean
+    Dim lockMode As Long
+
+    pairMode = (Me.Controls("cmbMode").ListIndex = 1)
+    lockMode = Me.Controls("cmbLock").ListIndex
+
+    Me.Controls("txtTeeth2").Enabled = pairMode
+    Me.Controls("txtPitchDia2").Enabled = False
+    Me.Controls("txtPitchAngle2").Enabled = False
+    Me.Controls("txtShaftAngle").Enabled = pairMode
+
+    Me.Controls("txtPitchAngle1").Enabled = Not pairMode
+
+    Select Case lockMode
+        Case 0
+            Me.Controls("txtModule").Enabled = True
+            Me.Controls("txtTeeth1").Enabled = True
+            Me.Controls("txtPitchDia1").Enabled = False
+
+        Case 1
+            Me.Controls("txtModule").Enabled = False
+            Me.Controls("txtTeeth1").Enabled = True
+            Me.Controls("txtPitchDia1").Enabled = True
+
+        Case 2
+            Me.Controls("txtModule").Enabled = True
+            Me.Controls("txtTeeth1").Enabled = False
+            Me.Controls("txtPitchDia1").Enabled = True
+    End Select
+End Sub
